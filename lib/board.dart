@@ -1,18 +1,40 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 import 'dart:ui' as Ui;
+import 'package:flutter/material.dart';
+import 'package:Scribbleasy/network.dart';
+import 'package:Scribbleasy/misc.dart';
 
 class Board extends StatefulWidget {
   @override
-  BoardState createState() => BoardState();
+  BoardState createState() {
+    var state = BoardState();
+    var connection = Connection('keraktelor.ddns.net', 6969, state);
+    state.connection = connection;
+    return state;
+  }
 }
 
 class BoardState extends State<Board> {
   Ui.Image image;
   List<Offset> points = [];
   bool baking = false;
+  Connection connection;
 
-  void addPoint(Offset offset, Size size, double scale) async {
+  void addPoint(
+      Offset offset, Size size, double scale, bool fromNetwork) async {
     points.add(offset);
+
+    if (!fromNetwork) {
+      Data update = Data();
+      update['type'] = 'sessionData';
+      update['dx'] = offset.dx;
+      update['dy'] = offset.dy;
+      update['width'] = size.width;
+      update['height'] = size.height;
+      update['scale'] = scale;
+      connection.sendData(update.toString());
+    }
+
     if (points.length > 50 && !baking) {
       baking = true;
       var recorder = Ui.PictureRecorder();
@@ -56,7 +78,7 @@ class BoardState extends State<Board> {
             ),
             onPanUpdate: (drag) {
               addPoint(drag.localPosition, size,
-                  MediaQuery.of(context).devicePixelRatio);
+                  MediaQuery.of(context).devicePixelRatio, false);
             });
       }),
     );
