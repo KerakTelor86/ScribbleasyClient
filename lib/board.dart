@@ -45,13 +45,13 @@ class BoardState extends State<Board> {
   }
 
   Widget build(BuildContext context) {
-    var size = Size.infinite;
     return Scaffold(
       body: LayoutBuilder(builder: (context, constraints) {
+        var size = constraints.constrain(Size.infinite);
         return GestureDetector(
             child: CustomPaint(
               painter: BoardPainter(image, points),
-              size: Size.infinite,
+              size: size,
               willChange: true,
             ),
             onPanUpdate: (drag) {
@@ -71,7 +71,7 @@ class BoardPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    print(points.length);
+    // print(points.length);
     if (image != null) {
       canvas.drawImageRect(
         image,
