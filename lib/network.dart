@@ -6,7 +6,7 @@ import 'package:Scribbleasy/board.dart';
 import 'package:Scribbleasy/misc.dart';
 
 class Connection {
-  String _name = 'test';
+  String _name = 'test2';
   final BoardState _boardState;
   var channel;
   int type = 1;
