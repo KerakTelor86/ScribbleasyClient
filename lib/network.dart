@@ -6,33 +6,23 @@ import 'package:Scribbleasy/board.dart';
 import 'package:Scribbleasy/misc.dart';
 
 class Connection {
-  String _name = 'test2';
-  final BoardState _boardState;
+  String _name;
+  StreamController<Data> incoming = StreamController.broadcast();
   var channel;
-  int type = 1;
 
-  Connection(String ip, int port, this._boardState) {
+  Connection(String ip, int port, this._name) {
     channel = IOWebSocketChannel.connect(
         'ws://${ip}:${port}/connect?username=${_name}');
     channel.stream.listen((data) => _handleMsg(data));
-    if (type == 0) {
-      create('test', 123, 2);
-    } else {
-      connect(0, 123);
-    }
   }
 
   void _handleMsg(String data) {
     Data received = Data.fromString(data);
-    if (received['type'] == 'sessionData') {
-      Ui.Offset offset = Ui.Offset(received['dx'], received['dy']);
-      Ui.Size size = Ui.Size(received['width'], received['height']);
-      _boardState.addPoint(offset, size, received['scale'], true);
-    }
+    incoming.add(received);
   }
 
-  void sendData(String data) {
-    channel.sink.add(data);
+  void sendData(Data data) {
+    channel.sink.add(data.toString());
   }
 
   void create(String name, int pw, int usr) {

@@ -7,9 +7,10 @@ import 'package:Scribbleasy/misc.dart';
 class Board extends StatefulWidget {
   @override
   BoardState createState() {
+    //var state = BoardState();
+    //var connection = Connection('keraktelor.ddns.net', 6969, state);
+    //state.connection = connection;
     var state = BoardState();
-    var connection = Connection('keraktelor.ddns.net', 6969, state);
-    state.connection = connection;
     return state;
   }
 }
@@ -32,7 +33,7 @@ class BoardState extends State<Board> {
       update['width'] = size.width;
       update['height'] = size.height;
       update['scale'] = scale;
-      connection.sendData(update.toString());
+      connection.sendData(update);
     }
 
     if (points.length > 50 && !baking) {
