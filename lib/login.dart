@@ -26,7 +26,7 @@ class LoginState extends State<Login> {
     _port = int.parse(port);
   }
 
-  void _connect() {
+  void _connect(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -60,7 +60,7 @@ class LoginState extends State<Login> {
       onChanged: _setPort,
     );
     final connectButton = RaisedButton(
-      onPressed: () => _connect(),
+      onPressed: () => _connect(context),
       child: Text('Connect'),
     );
     return Row(

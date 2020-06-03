@@ -24,21 +24,4 @@ class Connection {
   void sendData(Data data) {
     channel.sink.add(data.toString());
   }
-
-  void create(String name, int pw, int usr) {
-    Data data = Data();
-    data['name'] = name;
-    data['pwHash'] = pw;
-    data['maxUsers'] = usr;
-    data['type'] = 'createSession';
-    channel.sink.add(data.toString());
-  }
-
-  void connect(int id, int pw) {
-    Data data = Data();
-    data['id'] = id;
-    data['pwHash'] = pw;
-    data['type'] = 'joinSession';
-    channel.sink.add(data.toString());
-  }
 }

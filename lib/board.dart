@@ -5,12 +5,13 @@ import 'package:Scribbleasy/network.dart';
 import 'package:Scribbleasy/misc.dart';
 
 class Board extends StatefulWidget {
+  final Connection connection;
+
+  Board({Key key, @required this.connection}) : super(key: key);
+
   @override
   BoardState createState() {
-    //var state = BoardState();
-    //var connection = Connection('keraktelor.ddns.net', 6969, state);
-    //state.connection = connection;
-    var state = BoardState();
+    var state = BoardState(connection);
     return state;
   }
 }
@@ -19,7 +20,19 @@ class BoardState extends State<Board> {
   Ui.Image image;
   List<Offset> points = [];
   bool baking = false;
-  Connection connection;
+  final Connection connection;
+
+  BoardState(this.connection) {
+    connection.incoming.stream.listen((data) => _handleMsg(data));
+  }
+
+  void _handleMsg(Data received) {
+    if (received['type'] == 'sessionData') {
+      Ui.Offset offset = Ui.Offset(received['dx'], received['dy']);
+      Ui.Size size = Ui.Size(received['width'], received['height']);
+      addPoint(offset, size, received['scale'], true);
+    }
+  }
 
   void addPoint(
       Offset offset, Size size, double scale, bool fromNetwork) async {
