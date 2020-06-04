@@ -1,18 +1,54 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 import 'dart:ui' as Ui;
+import 'package:flutter/material.dart';
+import 'package:Scribbleasy/network.dart';
+import 'package:Scribbleasy/misc.dart';
 
 class Board extends StatefulWidget {
+  final Connection connection;
+
+  Board({Key key, @required this.connection}) : super(key: key);
+
   @override
-  BoardState createState() => BoardState();
+  BoardState createState() {
+    var state = BoardState(connection);
+    return state;
+  }
 }
 
 class BoardState extends State<Board> {
   Ui.Image image;
   List<Offset> points = [];
   bool baking = false;
+  final Connection connection;
 
-  void addPoint(Offset offset, Size size, double scale) async {
+  BoardState(this.connection) {
+    connection.incoming.stream.listen((data) => _handleMsg(data));
+  }
+
+  void _handleMsg(Data received) {
+    if (received['type'] == 'sessionData') {
+      Ui.Offset offset = Ui.Offset(received['dx'], received['dy']);
+      Ui.Size size = Ui.Size(received['width'], received['height']);
+      addPoint(offset, size, received['scale'], true);
+    }
+  }
+
+  void addPoint(
+      Offset offset, Size size, double scale, bool fromNetwork) async {
     points.add(offset);
+
+    if (!fromNetwork) {
+      Data update = Data();
+      update['type'] = 'sessionData';
+      update['dx'] = offset.dx;
+      update['dy'] = offset.dy;
+      update['width'] = size.width;
+      update['height'] = size.height;
+      update['scale'] = scale;
+      connection.sendData(update);
+    }
+
     if (points.length > 50 && !baking) {
       baking = true;
       var recorder = Ui.PictureRecorder();
@@ -56,7 +92,7 @@ class BoardState extends State<Board> {
             ),
             onPanUpdate: (drag) {
               addPoint(drag.localPosition, size,
-                  MediaQuery.of(context).devicePixelRatio);
+                  MediaQuery.of(context).devicePixelRatio, false);
             });
       }),
     );
