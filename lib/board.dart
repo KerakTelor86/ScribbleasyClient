@@ -27,7 +27,10 @@ class BoardState extends State<Board> {
   }
 
   void _handleMsg(Data received) {
-    if (received['type'] == 'sessionData') {
+    if (received['type'] != 'sessionData') {
+      return;
+    }
+    if (received['reqType'] == 'draw') {
       Ui.Offset offset = Ui.Offset(received['dx'], received['dy']);
       Ui.Size size = Ui.Size(received['width'], received['height']);
       addPoint(offset, size, received['scale'], true);
@@ -41,6 +44,7 @@ class BoardState extends State<Board> {
     if (!fromNetwork) {
       Data update = Data();
       update['type'] = 'sessionData';
+      update['reqType'] = 'draw';
       update['dx'] = offset.dx;
       update['dy'] = offset.dy;
       update['width'] = size.width;
@@ -80,21 +84,51 @@ class BoardState extends State<Board> {
     });
   }
 
+  void _leaveSession() {
+    Data data = Data();
+    data['type'] = 'quitSession';
+    connection.sendData(data);
+  }
+
+  void _syncBoard() {
+    Data data = Data();
+    data['type'] = 'sessionData';
+    data['reqType'] = 'syncReq';
+    connection.sendData(data);
+  }
+
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: LayoutBuilder(builder: (context, constraints) {
-        var size = constraints.constrain(Size.infinite);
-        return GestureDetector(
-            child: CustomPaint(
-              painter: BoardPainter(image, points),
-              size: size,
-              willChange: true,
+    return WillPopScope(
+      onWillPop: () {
+        Navigator.pop(context);
+        _leaveSession();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Board'),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () {
+                _syncBoard();
+              },
             ),
-            onPanUpdate: (drag) {
-              addPoint(drag.localPosition, size,
-                  MediaQuery.of(context).devicePixelRatio, false);
-            });
-      }),
+          ],
+        ),
+        body: LayoutBuilder(builder: (context, constraints) {
+          var size = constraints.constrain(Size.infinite);
+          return GestureDetector(
+              child: CustomPaint(
+                painter: BoardPainter(image, points),
+                size: size,
+                willChange: true,
+              ),
+              onPanUpdate: (drag) {
+                addPoint(drag.localPosition, size,
+                    MediaQuery.of(context).devicePixelRatio, false);
+              });
+        }),
+      ),
     );
   }
 }
