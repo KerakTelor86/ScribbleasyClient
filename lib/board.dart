@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as Ui;
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:Scribbleasy/network.dart';
 import 'package:Scribbleasy/misc.dart';
@@ -20,41 +21,53 @@ class BoardState extends State<Board> {
   bool baking = false;
   final Connection connection;
   StreamSubscription subscription;
-  var curSize;
+  Size curSize;
 
   BoardState(this.connection) {
     subscription =
         connection.incoming.stream.listen((data) => _handleMsg(data));
   }
 
-  void _handleMsg(Data received) {
+  void _handleMsg(Data received) async {
     if (received['type'] != 'sessionData') {
       return;
     }
-    if (received['reqType'] == 'draw') {
-      Ui.Offset offset = Ui.Offset(received['dx'], received['dy']);
-      Ui.Size size = Ui.Size(received['width'], received['height']);
-      addPoint(offset, size, received['scale'], true);
+    switch (received['reqType']) {
+      case 'draw':
+        Ui.Offset offset = Ui.Offset(received['dx'], received['dy']);
+        addPoint(offset, true);
+        break;
+      case 'sync':
+        points = List();
+        int len = received['pointsX'].length;
+        for (int i = 0; i < len; ++i) {
+          points.add(Ui.Offset(received['pointsX'][i], received['pointsY'][i]));
+        }
+        len = received['image'].length;
+        Uint8List temp = Uint8List(len);
+        for (int i = 0; i < len; ++i) {
+          temp[i] = received['image'][i];
+        }
+        var codec = await Ui.instantiateImageCodec(temp,
+            targetWidth: curSize.width.ceil(),
+            targetHeight: curSize.height.ceil());
+        var frame = await codec.getNextFrame();
+        image = frame.image;
+        setState(() {});
+        break;
     }
   }
 
-  void addPoint(
-      Offset offset, Size size, double scale, bool fromNetwork) async {
+  void addPoint(Offset offset, bool fromNetwork) async {
     if (!fromNetwork) {
+      offset = Ui.Offset(offset.dx / curSize.width, offset.dy / curSize.height);
       Data update = Data();
       update['type'] = 'sessionData';
       update['reqType'] = 'draw';
       update['dx'] = offset.dx;
       update['dy'] = offset.dy;
-      update['width'] = size.width;
-      update['height'] = size.height;
-      update['scale'] = scale;
       connection.sendData(update);
-    } else {
-      offset = Ui.Offset(offset.dx * curSize.width / size.width,
-          offset.dy * curSize.height / size.height);
     }
-
     points.add(offset);
 
     if (points.length > 50 && !baking) {
@@ -62,14 +75,11 @@ class BoardState extends State<Board> {
       var recorder = Ui.PictureRecorder();
       var canvas = Ui.Canvas(recorder);
       var numPoints = points.length;
-      canvas.scale(scale);
-      BoardPainter(image, points).paint(canvas, size);
+      BoardPainter(image, points).paint(canvas, curSize);
       var picture = recorder.endRecording();
       var newImage = await picture.toImage(
         curSize.width.ceil(),
         curSize.height.ceil(),
-        // (size.width * scale).ceil(),
-        // (size.height * scale).ceil(),
       );
       if (baking) {
         image = newImage;
@@ -99,7 +109,7 @@ class BoardState extends State<Board> {
   void _syncBoard() {
     Data data = Data();
     data['type'] = 'sessionData';
-    data['reqType'] = 'syncReq';
+    data['reqType'] = 'sync';
     connection.sendData(data);
   }
 
@@ -137,7 +147,7 @@ class BoardState extends State<Board> {
                 willChange: true,
               ),
               onPanUpdate: (drag) {
-                addPoint(drag.localPosition, curSize, 1, false);
+                addPoint(drag.localPosition, false);
               });
         }),
       ),
@@ -153,7 +163,6 @@ class BoardPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // print(points.length);
     if (image != null) {
       canvas.drawImageRect(
         image,
@@ -163,7 +172,8 @@ class BoardPainter extends CustomPainter {
       );
     }
     for (var i in points) {
-      canvas.drawCircle(i, 8, Paint()..color = Colors.black);
+      var temp = Offset(i.dx * size.width, i.dy * size.height);
+      canvas.drawCircle(temp, 8, Paint()..color = Colors.black);
     }
   }
 
