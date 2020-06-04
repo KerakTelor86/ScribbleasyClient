@@ -4,32 +4,21 @@ import 'package:Scribbleasy/misc.dart';
 import 'package:Scribbleasy/board.dart';
 
 class SessionList extends StatefulWidget {
-  final String nickname;
-  final String ip;
-  final int port;
+  final Connection connection;
 
-  SessionList(
-      {Key key,
-      @required this.nickname,
-      @required this.ip,
-      @required this.port})
-      : super(key: key);
+  SessionList({Key key, @required this.connection}) : super(key: key);
 
   @override
-  SessionListState createState() => SessionListState(ip, port, nickname);
+  SessionListState createState() => SessionListState(connection);
 }
 
 class SessionListState extends State<SessionList> {
-  final String nickname;
-  final String ip;
-  final int port;
-  Connection _connection;
+  Connection connection;
   BuildContext currentContext;
   List<Pair<int, String>> sessionList = List();
 
-  SessionListState(this.ip, this.port, this.nickname) {
-    _connection = Connection(ip, port, nickname);
-    _connection.incoming.stream.listen((data) => _handleMsg(data));
+  SessionListState(this.connection) {
+    connection.incoming.stream.listen((data) => _handleMsg(data));
     refreshList();
   }
 
@@ -79,7 +68,7 @@ class SessionListState extends State<SessionList> {
       Navigator.push(
         currentContext,
         MaterialPageRoute(
-          builder: (BuildContext context) => Board(connection: _connection),
+          builder: (BuildContext context) => Board(connection: connection),
         ),
       );
     }
@@ -88,7 +77,7 @@ class SessionListState extends State<SessionList> {
   void refreshList() {
     Data request = Data();
     request['type'] = 'getSessions';
-    _connection.sendData(request);
+    connection.sendData(request);
   }
 
   void newSession() {
@@ -130,7 +119,7 @@ class SessionListState extends State<SessionList> {
         data['pwHash'] = password;
         data['maxUsers'] = maxUsers;
         data['type'] = 'createSession';
-        _connection.sendData(data);
+        connection.sendData(data);
       },
       child: Text('OK'),
     );
@@ -189,7 +178,7 @@ class SessionListState extends State<SessionList> {
         request['type'] = 'joinSession';
         request['id'] = id;
         request['pwHash'] = password.hashCode;
-        _connection.sendData(request);
+        connection.sendData(request);
       },
       child: Text('OK'),
     );

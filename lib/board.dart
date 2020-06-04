@@ -10,10 +10,7 @@ class Board extends StatefulWidget {
   Board({Key key, @required this.connection}) : super(key: key);
 
   @override
-  BoardState createState() {
-    var state = BoardState(connection);
-    return state;
-  }
+  BoardState createState() => BoardState(connection);
 }
 
 class BoardState extends State<Board> {

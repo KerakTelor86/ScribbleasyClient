@@ -4,6 +4,7 @@ import 'dart:ui' as Ui;
 import 'package:web_socket_channel/io.dart';
 import 'package:Scribbleasy/board.dart';
 import 'package:Scribbleasy/misc.dart';
+import 'package:Scribbleasy/exceptions.dart';
 
 class Connection {
   String _name;
@@ -11,9 +12,13 @@ class Connection {
   var channel;
 
   Connection(String ip, int port, this._name) {
-    channel = IOWebSocketChannel.connect(
-        'ws://${ip}:${port}/connect?username=${_name}');
-    channel.stream.listen((data) => _handleMsg(data));
+    try {
+      channel = IOWebSocketChannel.connect(
+          'ws://${ip}:${port}/connect?username=${_name}');
+      channel.stream.listen((data) => _handleMsg(data));
+    } catch (e) {
+      throw ConnectionFailureException();
+    }
   }
 
   void _handleMsg(String data) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:Scribbleasy/list.dart';
 import 'package:Scribbleasy/network.dart';
 import 'package:Scribbleasy/misc.dart';
+import 'package:Scribbleasy/exceptions.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -13,6 +14,7 @@ class LoginState extends State<Login> {
   String _ip = null;
   int _port = null;
   Connection _connection = null;
+  BuildContext currentContext;
 
   void _setNickname(String name) {
     _nickname = name;
@@ -26,17 +28,66 @@ class LoginState extends State<Login> {
     _port = int.parse(port);
   }
 
+  void _handleMsg(Data data) {
+    if (data['type'] != 'auth') {
+      return;
+    }
+    if (data['auth'] == 1) {
+      Navigator.push(
+        currentContext,
+        MaterialPageRoute(
+          builder: (BuildContext context) =>
+              SessionList(connection: _connection),
+        ),
+      );
+    } else {
+      showDialog(
+        context: currentContext,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Connection failure'),
+            content: Text('Server full.'),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
   void _connect(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) =>
-            SessionList(ip: _ip, port: _port, nickname: _nickname),
-      ),
-    );
+    try {
+      _connection = Connection(_ip, _port, _nickname);
+      _connection.incoming.stream.listen((data) => _handleMsg(data));
+    } on ConnectionFailureException catch (e) {
+      showDialog(
+        context: currentContext,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Connection failure'),
+            content: Text('Recheck server IP and port.'),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   Widget build(BuildContext context) {
+    currentContext = context;
     final nameField = TextField(
       decoration: InputDecoration(
         border: OutlineInputBorder(),
