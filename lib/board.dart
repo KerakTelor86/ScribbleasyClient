@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as Ui;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:Scribbleasy/network.dart';
 import 'package:Scribbleasy/misc.dart';
@@ -18,9 +19,12 @@ class BoardState extends State<Board> {
   List<Offset> points = [];
   bool baking = false;
   final Connection connection;
+  StreamSubscription subscription;
+  var curSize;
 
   BoardState(this.connection) {
-    connection.incoming.stream.listen((data) => _handleMsg(data));
+    subscription =
+        connection.incoming.stream.listen((data) => _handleMsg(data));
   }
 
   void _handleMsg(Data received) {
@@ -36,8 +40,6 @@ class BoardState extends State<Board> {
 
   void addPoint(
       Offset offset, Size size, double scale, bool fromNetwork) async {
-    points.add(offset);
-
     if (!fromNetwork) {
       Data update = Data();
       update['type'] = 'sessionData';
@@ -48,7 +50,12 @@ class BoardState extends State<Board> {
       update['height'] = size.height;
       update['scale'] = scale;
       connection.sendData(update);
+    } else {
+      offset = Ui.Offset(offset.dx * curSize.width / size.width,
+          offset.dy * curSize.height / size.height);
     }
+
+    points.add(offset);
 
     if (points.length > 50 && !baking) {
       baking = true;
@@ -59,8 +66,10 @@ class BoardState extends State<Board> {
       BoardPainter(image, points).paint(canvas, size);
       var picture = recorder.endRecording();
       var newImage = await picture.toImage(
-        (size.width * scale).ceil(),
-        (size.height * scale).ceil(),
+        curSize.width.ceil(),
+        curSize.height.ceil(),
+        // (size.width * scale).ceil(),
+        // (size.height * scale).ceil(),
       );
       if (baking) {
         image = newImage;
@@ -94,6 +103,13 @@ class BoardState extends State<Board> {
     connection.sendData(data);
   }
 
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () {
@@ -113,16 +129,15 @@ class BoardState extends State<Board> {
           ],
         ),
         body: LayoutBuilder(builder: (context, constraints) {
-          var size = constraints.constrain(Size.infinite);
+          curSize = constraints.constrain(Size.infinite);
           return GestureDetector(
               child: CustomPaint(
                 painter: BoardPainter(image, points),
-                size: size,
+                size: curSize,
                 willChange: true,
               ),
               onPanUpdate: (drag) {
-                addPoint(drag.localPosition, size,
-                    MediaQuery.of(context).devicePixelRatio, false);
+                addPoint(drag.localPosition, curSize, 1, false);
               });
         }),
       ),

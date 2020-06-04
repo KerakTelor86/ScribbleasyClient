@@ -28,7 +28,7 @@ class SessionListState extends State<SessionList> {
         return updateList(data['sessions']);
         break;
       case 'sessionAuth':
-        return checkAuth(data['auth']);
+        return checkAuth(data['auth'], data['reason']);
         break;
       default:
         break;
@@ -45,14 +45,18 @@ class SessionListState extends State<SessionList> {
     setState(() {});
   }
 
-  void checkAuth(int auth) {
+  void checkAuth(int auth, String reason) {
     if (auth == 0) {
+      String message = reason;
+      if (message == null) {
+        message = 'Unknown error';
+      }
       showDialog(
         context: currentContext,
         builder: (context) {
           return AlertDialog(
-            title: Text('Authentication failure'),
-            content: Text('Recheck your password.'),
+            title: Text('Error'),
+            content: Text(message),
             actions: <Widget>[
               FlatButton(
                 child: Text('OK'),
