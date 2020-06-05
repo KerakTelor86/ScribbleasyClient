@@ -28,7 +28,7 @@ class BoardState extends State<Board> {
         connection.incoming.stream.listen((data) => _handleMsg(data));
   }
 
-  void _handleMsg(Data received) async {
+  void _handleMsg(Data received) {
     if (received['type'] != 'sessionData') {
       return;
     }
@@ -38,22 +38,7 @@ class BoardState extends State<Board> {
         addPoint(offset, true);
         break;
       case 'sync':
-        points = List();
-        int len = received['pointsX'].length;
-        for (int i = 0; i < len; ++i) {
-          points.add(Ui.Offset(received['pointsX'][i], received['pointsY'][i]));
-        }
-        len = received['image'].length;
-        Uint8List temp = Uint8List(len);
-        for (int i = 0; i < len; ++i) {
-          temp[i] = received['image'][i];
-        }
-        var codec = await Ui.instantiateImageCodec(temp,
-            targetWidth: curSize.width.ceil(),
-            targetHeight: curSize.height.ceil());
-        var frame = await codec.getNextFrame();
-        image = frame.image;
-        setState(() {});
+        _replaceBoard(received);
         break;
     }
   }
@@ -92,12 +77,34 @@ class BoardState extends State<Board> {
     }
   }
 
-  void clear() {
-    setState(() {
-      baking = false;
+  void _replaceBoard(Data received) async {
+    points = List();
+    int len = received['pointsX'].length;
+    for (int i = 0; i < len; ++i) {
+      points.add(Ui.Offset(received['pointsX'][i], received['pointsY'][i]));
+    }
+    if (received['image'] == null) {
       image = null;
-      points.clear();
-    });
+    } else {
+      len = received['image'].length;
+      Uint8List temp = Uint8List(len);
+      for (int i = 0; i < len; ++i) {
+        temp[i] = received['image'][i];
+      }
+      var codec = await Ui.instantiateImageCodec(temp,
+          targetWidth: curSize.width.ceil(),
+          targetHeight: curSize.height.ceil());
+      var frame = await codec.getNextFrame();
+      image = frame.image;
+    }
+    setState(() {});
+  }
+
+  void _voteClear() {
+    Data data = Data();
+    data['type'] = 'sessionData';
+    data['reqType'] = 'clear';
+    connection.sendData(data);
   }
 
   void _leaveSession() {
@@ -130,6 +137,12 @@ class BoardState extends State<Board> {
         appBar: AppBar(
           title: const Text('Board'),
           actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.clear),
+              onPressed: () {
+                _voteClear();
+              },
+            ),
             IconButton(
               icon: Icon(Icons.refresh),
               onPressed: () {
