@@ -171,9 +171,16 @@ class BoardPainter extends CustomPainter {
         Paint(),
       );
     }
+    double dotSize = 8;
+    if (size.height < size.width) {
+      dotSize *= size.height;
+    } else {
+      dotSize *= size.width;
+    }
+    dotSize /= 1000;
     for (var i in points) {
       var temp = Offset(i.dx * size.width, i.dy * size.height);
-      canvas.drawCircle(temp, 8, Paint()..color = Colors.black);
+      canvas.drawCircle(temp, dotSize, Paint()..color = Colors.black);
     }
   }
 
