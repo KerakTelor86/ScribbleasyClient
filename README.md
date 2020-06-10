@@ -26,3 +26,8 @@ The board itself has three functionalities, two of which can be used by clicking
 - Sync board (refresh button)
 
   Used to sync board when you experience desync or whatever. Do not spam, the server **WILL** die.
+
+## Implementation notes
+- The board bakes all drawing points to a dart.ui.Image object once the amount of drawing points have exceeded 50. This is done asynchronously and does not interrupt live drawing.
+
+  Why: Most other whiteboard implementations on Flutter does not bake the points to a bitmap format, thus having to redraw each drawing point every frame. This significantly slows down frame rate when the board has been used for a while. Baking the points to the image is in my opinion an acceptable compromise to mitigate this problem.
