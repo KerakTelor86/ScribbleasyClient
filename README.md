@@ -30,4 +30,4 @@ The board itself has three functionalities, two of which can be used by clicking
 ## Implementation notes
 - The board bakes all drawing points to a dart.ui.Image object once the amount of drawing points have exceeded 50. This is done asynchronously and does not interrupt live drawing.
 
-  Why: Most other whiteboard implementations on Flutter do not bake the points to a bitmap format, thus having to redraw each drawing point every frame. This significantly slows down the frame rate of the app when the board has been used for a while. Baking the points to an image is in my opinion an acceptable compromise to mitigate this problem.
+  Why: Most other whiteboard implementations on Flutter do not bake the points to a bitmap format. This gives in better image quality at the cost of having to redraw each point every frame. This significantly slows down the frame rate of the app, especially when the board has been used for a while. Baking the points to an image is in my opinion an acceptable compromise to mitigate this problem.
