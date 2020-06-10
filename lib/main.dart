@@ -17,6 +17,9 @@ class MyApp extends StatelessWidget {
           child: Login(),
         ),
       ),
+      theme: ThemeData(
+        primaryColor: const Color(0xFF7482FF),
+      ),
     );
   }
 }
