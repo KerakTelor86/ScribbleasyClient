@@ -5,7 +5,7 @@ Needs a [server](https://github.com/KerakTelor86/ScribbleasyServer) to connect t
 
 ## Disclaimers
 - The actual whiteboard does not handle differing resolutions very well. It stretches its contents to fill whatever screen ratio it's being run in.
-- Fast writing may result in dashed dots instead of a smooth line due to Flutter's low input refresh rate and also the fact that there is no smoothing. This is a design choice to preserve the "live" feeling of the whiteboard.
+- Fast writing may result in dashed dots instead of a smooth line due to Flutter's low input refresh rate and also the fact that there is currently no input smoothing.
 
 ## How to use
 There are three different pages in the app, namely:
