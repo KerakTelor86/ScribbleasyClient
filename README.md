@@ -21,7 +21,7 @@ The board itself has three functionalities, two of which can be used by clicking
   
 - Clear board (X button)
 
-  Used to send a request to the server to reset the board. Every user must have clicked the button before a board reset can be performed.
+  Used to send a request to the server to reset the board. Every user must have clicked the button before a board reset is performed.
   
 - Sync board (refresh button)
 
