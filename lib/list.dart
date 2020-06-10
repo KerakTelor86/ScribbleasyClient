@@ -15,10 +15,12 @@ class SessionList extends StatefulWidget {
 class SessionListState extends State<SessionList> {
   Connection connection;
   BuildContext currentContext;
+  var subscription;
   List<Pair<int, String>> sessionList = List();
 
   SessionListState(this.connection) {
-    connection.incoming.stream.listen((data) => _handleMsg(data));
+    subscription =
+        connection.incoming.stream.listen((data) => _handleMsg(data));
     refreshList();
   }
 
@@ -164,6 +166,18 @@ class SessionListState extends State<SessionList> {
     );
   }
 
+  void _logout() {
+    Data data = Data();
+    data['type'] = 'logout';
+    connection.sendData(data);
+  }
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
+  }
+
   void joinSession(int id) {
     int password;
     final passwordField = TextField(
@@ -222,34 +236,40 @@ class SessionListState extends State<SessionList> {
   @override
   Widget build(BuildContext context) {
     currentContext = context;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sessions'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.add_circle),
-            onPressed: () {
-              newSession();
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () {
-              refreshList();
-            },
-          ),
-        ],
-      ),
-      body: ListView.builder(
-        itemCount: sessionList.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(sessionList[index].second),
-            onTap: () {
-              joinSession(sessionList[index].first);
-            },
-          );
-        },
+    return WillPopScope(
+      onWillPop: () {
+        Navigator.pop(context);
+        _logout();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Sessions'),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.add_circle),
+              onPressed: () {
+                newSession();
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () {
+                refreshList();
+              },
+            ),
+          ],
+        ),
+        body: ListView.builder(
+          itemCount: sessionList.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text(sessionList[index].second),
+              onTap: () {
+                joinSession(sessionList[index].first);
+              },
+            );
+          },
+        ),
       ),
     );
   }

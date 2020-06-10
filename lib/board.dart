@@ -154,14 +154,15 @@ class BoardState extends State<Board> {
         body: LayoutBuilder(builder: (context, constraints) {
           curSize = constraints.constrain(Size.infinite);
           return GestureDetector(
-              child: CustomPaint(
-                painter: BoardPainter(image, points),
-                size: curSize,
-                willChange: true,
-              ),
-              onPanUpdate: (drag) {
-                addPoint(drag.localPosition, false);
-              });
+            child: CustomPaint(
+              painter: BoardPainter(image, points),
+              size: curSize,
+              willChange: true,
+            ),
+            onPanUpdate: (drag) {
+              addPoint(drag.localPosition, false);
+            },
+          );
         }),
       ),
     );
